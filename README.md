@@ -1,23 +1,59 @@
-# Modul PBB Desa – Dashboard
+# Modul PBB Desa – Dashboard (dengan sinkron Google Sheets)
 
-Aplikasi web statis untuk pengelolaan PBB tingkat desa. Berjalan sepenuhnya di browser (tanpa server/database).
+Aplikasi web statis untuk pengelolaan PBB tingkat desa. Bisa dipakai **offline** (data di browser) atau **multi-user online**
+(data tersimpan di Google Sheets milik Anda, gratis).
 
-## Cara Menjalankan
-- **Online:** buka alamat GitHub Pages repository ini (lihat langkah di bawah).
-- **Lokal:** klik dua kali `index.html`.
+Isi repository:
+| File | Fungsi |
+|---|---|
+| `index.html` | Aplikasi |
+| `config.js` | Tempat menempel URL & kunci cloud |
+| `Code.gs` | Kode backend untuk Google Apps Script (**tidak** dipakai GitHub, hanya untuk ditempel di Google Sheet) |
+| `.nojekyll` | Agar GitHub Pages menyajikan file apa adanya |
 
-## Cara Publikasi di GitHub Pages (gratis)
-1. Buat repository baru di GitHub (contoh: `pbb-desa`), set **Public**.
-2. Klik **Add file → Upload files**, seret seluruh isi folder ini (`index.html`, `README.md`, `.nojekyll`), lalu **Commit changes**.
-3. Buka **Settings → Pages**.
-4. Pada **Build and deployment → Source**, pilih **Deploy from a branch**.
-5. Pilih branch **main** dan folder **/ (root)**, klik **Save**.
-6. Tunggu 1–2 menit. Alamat situs: `https://USERNAME.github.io/pbb-desa/`
+## A. Publikasi di GitHub Pages
+1. Buat repository **Public** di GitHub (mis. `pbb-desa`), upload seluruh isi folder ini.
+2. **Settings → Pages →** Source: *Deploy from a branch* → branch `main`, folder `/ (root)` → Save.
+3. Alamat: `https://USERNAME.github.io/pbb-desa/`
 
-## Catatan Penting
-- Data disimpan di **localStorage** browser masing-masing perangkat. Data tidak dibagikan antar perangkat dan bisa hilang jika cache browser dihapus. Lakukan **ekspor/backup Excel** secara berkala.
-- Repository Public berarti kode terlihat umum, tetapi data yang Anda input **tidak** ikut terunggah.
-- Membutuhkan internet saat pertama dibuka untuk memuat library SheetJS (cdnjs).
+## B. Mengaktifkan penyimpanan bersama (Google Sheets)
+1. Buka sheets.google.com → buat spreadsheet baru, beri nama mis. **Database PBB Desa**.
+2. Menu **Ekstensi → Apps Script**. Hapus isi default, tempel seluruh isi `Code.gs`.
+3. Ubah baris `var KEY = '...'` menjadi kata sandi acak buatan Anda (mis. 20 karakter). Simpan (ikon disket).
+4. Pilih fungsi **setup** di dropdown atas, klik **Jalankan**, lalu setujui izin
+   (Lanjutan → *Buka ... (tidak aman)* → Izinkan). Ini normal untuk skrip buatan sendiri.
+5. Klik **Deploy → Penerapan baru** → ikon roda gigi → **Aplikasi web**:
+   - *Jalankan sebagai*: **Saya**
+   - *Yang memiliki akses*: **Siapa saja**
+   - klik **Deploy**, lalu **salin URL** (berakhiran `/exec`).
+6. Di GitHub, buka `config.js` → ikon pensil → isi:
+   ```js
+   var CLOUD_URL = 'URL_DARI_LANGKAH_5';
+   var CLOUD_KEY = 'KUNCI_YANG_SAMA_DENGAN_KEY_DI_Code.gs';
+   ```
+   lalu **Commit changes**. Tunggu 1–2 menit.
+7. Buka aplikasi sebagai admin: **Pengaturan → Akun & akses**, atur PIN admin dan PIN tiap pemungut, lalu tekan
+   **"Unggah data & paket pemungut ke cloud"**.
 
-## Pembaruan
-Edit atau upload ulang `index.html` ke repository; situs diperbarui otomatis dalam beberapa menit.
+### Cara pakai sehari-hari
+- **Pemungut** membuka alamat aplikasi di HP → pilih nama → masukkan PIN → data wilayahnya termuat otomatis.
+- Setiap **Lunas / Serahkan SPPT / Batalkan** otomatis terkirim ke Google Sheets dan muncul di perangkat lain
+  dalam ±30 detik. Jika sinyal hilang, catatan menunggu di perangkat dan terkirim sendiri saat online
+  (lihat label ☁ di pojok kanan bawah; ketuk untuk sinkron sekarang).
+- **Admin** menekan *Unggah ke cloud* lagi setiap kali mengubah data NOP, wilayah/pemungut, jadwal, atau PIN.
+  Pemungut lalu memakai tombol **"Muat paket terbaru dari cloud"** di layar login.
+- Admin di perangkat lain: buka aplikasi → pilih *Admin* → PIN → data dipulihkan dari cloud.
+- Di Google Sheet Anda ada lembar **DHKP** (daftar NOP + status lunas/serah, otomatis terisi) dan **Pembayaran**
+  (catatan mentah, termasuk siapa yang mencatat). Jangan mengedit lembar `Pembayaran`/`_DB` secara manual.
+
+### Catatan keamanan
+- `CLOUD_KEY` terlihat di file publik; fungsinya hanya menahan akses iseng. Perlindungan utama adalah PIN
+  (diverifikasi server; 30 kali salah → terkunci 10 menit).
+- Jangan membagikan (share) Google Sheet ke pemungut; cukup Anda sebagai pemilik. Lembar `_DB` menyimpan seluruh data
+  dan hash PIN.
+- Jika mengubah kode `Code.gs` di kemudian hari: **Deploy → Kelola penerapan → Edit → Versi baru → Deploy**.
+- Kuota gratis Google Apps Script cukup untuk puluhan pengguna setingkat desa.
+- Tetap lakukan **Cadangan data** (menu Pengaturan) secara berkala.
+
+## Mode offline
+Biarkan `CLOUD_URL` kosong di `config.js`; aplikasi berjalan seperti semula (data di browser + alur paket/setoran JSON).
